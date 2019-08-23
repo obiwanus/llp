@@ -6,4 +6,4 @@ export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 
 apt update
-apt install -y nasm build-essential
+apt install -y nasm build-essential gdb
