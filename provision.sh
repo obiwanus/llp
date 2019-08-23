@@ -7,3 +7,5 @@ export LC_ALL=en_US.UTF-8
 
 apt update
 apt install -y nasm build-essential gdb
+
+echo 'set disassembly-flavor intel' > ~/.gdbinit
