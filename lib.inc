@@ -7,18 +7,31 @@ exit:
 
 
 string_length:
-    # TODO
+    xor rax, rax
+.loop:
+    cmp byte [rdi + rax], 0
+    je .end
+    inc rax
+    jmp .loop
+.end:
     ret
 
 
 print_string:
-    xor rax, rax
+    call string_length
+    mov rdx, rax    ; save string length
+
+    mov rax, 1
+    mov rsi, rdi
+    mov rdi, 1
+    syscall
     ret
 
 
 print_char:
     xor rax, rax
     ret
+
 
 print_newline:
     xor rax, rax
@@ -60,4 +73,29 @@ parse_int:
 
 
 string_copy:
+    ; accepts a pointer to a string (rdi), a pointer to a buffer (rsi), and the buffer's length (rdx).
+    ; if the string doesn't fit into the buffer, then zero is returned, otherwise
+    ; the destination address is returned
+    call string_length
+    inc rax     ; make sure we have the space for the zero at the end
+    cmp rax, rdx
+    jg .doesntfit
+
+    push rsi    ; save buffer pointer
+.loop:
+    mov al, [rdi]
+    test al, al
+    jz .end
+    mov [rsi], al
+    inc rdi
+    inc rsi
+    jmp .loop
+
+.end:
+    mov byte [rsi], 0   ; null-terminate
+    pop rax     ; pop the old buffer pointer into rax
+    ret
+
+.doesntfit:
+    xor rax, rax
     ret
