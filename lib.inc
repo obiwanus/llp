@@ -48,7 +48,8 @@ print_newline:
     ret
 
 
-print_uint:
+_print_uint:
+    ; print the value rsi:rdi as decimal unsigned int
     push rbp
     mov rbp, rsp
 
@@ -58,7 +59,7 @@ print_uint:
     mov byte [rcx], 0   ; null-terminate preventively
 
     mov rax, rdi
-    xor rdx, rdx
+    mov rdx, rsi
     mov rdi, 10
 .loop:
     div rdi     ; rdx:rax / 10 -> rax, rdx
@@ -76,8 +77,16 @@ print_uint:
     ret
 
 
+print_uint:
+    xor rsi, rsi
+    call _print_uint
+    ret
+
+
 print_int:
-    xor rax, rax
+    # !!!!!!! TODO: try to reuse _print_uint
+    mov
+    cmp rdi,
     ret
 
 string_equals:
