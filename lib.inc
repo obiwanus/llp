@@ -1,3 +1,6 @@
+section .data
+ascii_digits: db '0123456789ABCDEF'
+
 section .text
 
 exit:
@@ -29,17 +32,47 @@ print_string:
 
 
 print_char:
-    xor rax, rax
+    mov rax, 1
+    push rdi
+    mov rsi, rsp    ; save pointer to char
+    mov rdi, 1
+    mov rdx, 1
+    syscall
+    pop rdi
     ret
 
 
 print_newline:
-    xor rax, rax
+    mov rdi, 10
+    call print_char
     ret
 
 
 print_uint:
-    xor rax, rax
+    push rbp
+    mov rbp, rsp
+
+    mov rcx, rsp
+    sub rsp, 24  ; allocate a buffer for output string
+    dec rcx
+    mov byte [rcx], 0   ; null-terminate preventively
+
+    mov rax, rdi
+    xor rdx, rdx
+    mov rdi, 10
+.loop:
+    div rdi     ; rdx:rax / 10 -> rax, rdx
+    mov dl, [ascii_digits + rdx]
+    dec rcx
+    mov [rcx], dl
+    xor rdx, rdx
+    test rax, rax
+    jnz .loop
+
+    mov rdi, rcx
+    call print_string
+
+    leave
     ret
 
 
