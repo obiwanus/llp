@@ -84,10 +84,20 @@ print_uint:
 
 
 print_int:
-    # !!!!!!! TODO: try to reuse _print_uint
-    mov
-    cmp rdi,
+    mov rax, 0x8000000000000000  ; check the special case of max negative int
+    cmp rdi, rax
+    jne .within_range
+    mov rsi, 1
+    mov rdi, 0
+    jmp .print
+.within_range:
+    ; !!!!!!!!!!!!
+    neg rdi
+    mov rsi, 0
+.print:
+    call _print_uint
     ret
+
 
 string_equals:
     xor rax, rax
