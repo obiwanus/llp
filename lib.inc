@@ -31,6 +31,8 @@ print_string:
     ret
 
 
+print_newline:
+    mov rdi, 10
 print_char:
     mov rax, 1
     push rdi
@@ -41,13 +43,15 @@ print_char:
     pop rdi
     ret
 
-
-print_newline:
-    mov rdi, 10
+print_int:
+    cmp rdi, 0
+    jge print_uint
+    ; We don't handle the case of max negative int to simplify the code
+    push rdi
+    mov rdi, '-'
     call print_char
-    ret
-
-
+    pop rdi
+    neg rdi
 print_uint:
     ; print the value of rdi as decimal unsigned int
     push rbp
@@ -74,20 +78,6 @@ print_uint:
     call print_string
 
     leave
-    ret
-
-
-print_int:
-    cmp rdi, 0
-    jge .nonnegative
-    ; We don't handle the case of max negative int to simplify the code
-    push rdi
-    mov rdi, '-'
-    call print_char
-    pop rdi
-    neg rdi
-.nonnegative:
-    call print_uint
     ret
 
 
