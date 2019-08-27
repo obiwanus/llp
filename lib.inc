@@ -48,8 +48,8 @@ print_newline:
     ret
 
 
-_print_uint:
-    ; print the value rsi:rdi as decimal unsigned int
+print_uint:
+    ; print the value of rdi as decimal unsigned int
     push rbp
     mov rbp, rsp
 
@@ -59,7 +59,7 @@ _print_uint:
     mov byte [rcx], 0   ; null-terminate preventively
 
     mov rax, rdi
-    mov rdx, rsi
+    xor rdx, rdx
     mov rdi, 10
 .loop:
     div rdi     ; rdx:rax / 10 -> rax, rdx
@@ -77,25 +77,17 @@ _print_uint:
     ret
 
 
-print_uint:
-    xor rsi, rsi
-    call _print_uint
-    ret
-
-
 print_int:
-    mov rax, 0x8000000000000000  ; check the special case of max negative int
-    cmp rdi, rax
-    jne .within_range
-    mov rsi, 1
-    mov rdi, 0
-    jmp .print
-.within_range:
-    ; !!!!!!!!!!!!
+    cmp rdi, 0
+    jge .nonnegative
+    ; We don't handle the case of max negative int to simplify the code
+    push rdi
+    mov rdi, '-'
+    call print_char
+    pop rdi
     neg rdi
-    mov rsi, 0
-.print:
-    call _print_uint
+.nonnegative:
+    call print_uint
     ret
 
 
@@ -108,14 +100,17 @@ read_char:
     xor rax, rax
     ret
 
+
 read_word:
     ret
+
 
 ; rdi points to a string
 ; returns rax: number, rdx : length
 parse_uint:
     xor rax, rax
     ret
+
 
 ; rdi points to a string
 ; returns rax: number, rdx : length
@@ -142,7 +137,6 @@ string_copy:
     inc rdi
     inc rsi
     jmp .loop
-
 .end:
     mov byte [rsi], 0   ; null-terminate
     pop rax     ; pop the old buffer pointer into rax
