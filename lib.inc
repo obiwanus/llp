@@ -97,7 +97,21 @@ string_equals:
 
 
 read_char:
+    ; Reads one char from stdin and returns it
+    mov rax, 0      ; read
+    mov rdi, 0      ; stdin
+    sub rsp, 1      ; buffer to read into
+    lea rsi, [rsp]
+    mov rdx, 1      ; number of bytes to read
+    syscall
+    cmp rax, 1      ; should've read 1 byte
+    jne .error
+    mov rax, [rsp]  ; return the char
+    jmp .end
+.error:
     xor rax, rax
+.end:
+    add rsp, 1
     ret
 
 
