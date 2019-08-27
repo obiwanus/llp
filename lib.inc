@@ -91,11 +91,6 @@ print_int:
     ret
 
 
-string_equals:
-    xor rax, rax
-    ret
-
-
 read_char:
     ; Reads one char from stdin and returns it
     mov rax, 0      ; read
@@ -198,7 +193,23 @@ parse_uint:
 ; rdi points to a string
 ; returns rax: number, rdx : length
 parse_int:
-    xor rax, rax
+    xor rcx, rcx    ; 0 if positive, -1 if negative
+    mov al, [rdi]   ; check for a minus sign
+    cmp al, '-'
+    jne .parse
+    mov rcx, -1
+    inc rdi
+.parse:
+    push rcx
+    call parse_uint
+    pop rcx
+    test rdx, rdx
+    jz .end         ; failed to parse
+    cmp rcx, -1
+    jne .end
+    neg rax         ; overflow is not handled
+    inc rdx         ; sign adds 1 to the length
+.end:
     ret
 
 
@@ -226,5 +237,27 @@ string_copy:
     ret
 
 .doesntfit:
+    xor rax, rax
+    ret
+
+
+; rdi - pointer to string1
+; rsi - pointer to string2
+; returns 1 if strings are equal, 0 otherwise
+string_equals:
+    xor rax, rax
+.loop:
+    mov al, [rdi]
+    cmp al, [rsi]
+    jne .not_equal
+    test al, al
+    jz .equal
+    inc rdi
+    inc rsi
+    jmp .loop
+.equal:
+    mov rax, 1
+    ret
+.not_equal:
     xor rax, rax
     ret
