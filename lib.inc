@@ -106,7 +106,8 @@ read_char:
     syscall
     cmp rax, 1      ; should've read 1 byte
     jne .error
-    mov rax, [rsp]  ; return the char
+    xor rax, rax
+    mov al, [rsp]  ; return the char
     jmp .end
 .error:
     xor rax, rax
@@ -116,6 +117,44 @@ read_char:
 
 
 read_word:
+    ; Attempts to read a word into buffer. If too big, returns 0, otherwise buffer address
+    ; rdi - address of a buffer, rsi - buffer size
+    xor rcx, rcx
+.loop:
+    cmp rcx, rsi
+    jge .out_of_space
+
+    ; attempt to read a char
+    push rsi
+    push rcx
+    push rdi
+    call read_char
+    pop rdi
+    pop rcx
+    pop rsi
+
+    ; check for whitespace
+    cmp rax, 0x20
+    je .whitespace
+    cmp rax, 0x9
+    je .whitespace
+    cmp rax, 0x10
+    je .whitespace
+    cmp rax, 0      ; maybe nothing was read
+    je .whitespace
+
+    ; write into buffer
+    mov [rdi + rcx], al
+    inc rcx
+    jmp .loop
+.whitespace:
+    mov byte [rdi + rcx], 0     ; null-terminate
+    mov rax, rdi
+    mov rdx, rcx
+    ret
+.out_of_space:
+    xor rax, rax
+    xor rdx, rdx
     ret
 
 
