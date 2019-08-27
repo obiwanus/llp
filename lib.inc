@@ -1,5 +1,5 @@
 section .data
-ascii_digits: db '0123456789ABCDEF'
+ascii_digits: db '0123456789'
 
 section .text
 
@@ -116,9 +116,9 @@ read_char:
     ret
 
 
+; Attempts to read a word into buffer. If too big, returns 0, otherwise buffer address
+; rdi - address of a buffer, rsi - buffer size
 read_word:
-    ; Attempts to read a word into buffer. If too big, returns 0, otherwise buffer address
-    ; rdi - address of a buffer, rsi - buffer size
     xor rcx, rcx
 .loop:
     cmp rcx, rsi
@@ -161,9 +161,39 @@ read_word:
 ; rdi points to a string
 ; returns rax: number, rdx : length
 parse_uint:
-    xor rax, rax
-    ret
+    push rbx
+    xor rax, rax    ; result
+    xor rbx, rbx    ; length
+    mov rsi, 10     ; to multiply with
 
+.loop:
+    ; try to parse a digit
+    xor rcx, rcx
+    mov cl, [rdi + rbx]
+    cmp cl, '0'
+    jb .no_digit
+    cmp cl, '9'
+    ja .no_digit
+
+    sub cl, '0' ; now cl contains the digit we want
+    mul rsi     ; rdx:rax = rax * 10
+    add rax, rcx
+
+    test rdx, rdx   ; check if we spilled to rdx
+    jnz .overflow
+
+    inc rbx
+    jmp .loop
+
+.no_digit:
+    ; rax should now contain the number we want
+    mov rdx, rbx
+    pop rbx
+    ret
+.overflow:
+    xor rax, rax
+    xor rdx, rdx
+    ret
 
 ; rdi points to a string
 ; returns rax: number, rdx : length
