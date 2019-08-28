@@ -7,6 +7,7 @@
 section .data
 filename: db "input.txt", 0
 msg_file_contents: db "File contents: ", 0
+msg_factorial: db "Factorial: ", 0
 
 section .text
 global _start
@@ -30,13 +31,39 @@ _start:
     mov r9, 0       ; offset within the file
     syscall
 
-    push rax
+    mov r12, rax    ; save pointer to the mapped region
 
     mov rdi, msg_file_contents
     call print_string
 
-    pop rax
+    mov rax, r12
     mov rdi, rax
     call print_string
+    call print_newline
+
+    mov rdi, r12
+    call parse_uint
+    mov r12, rax    ; save parsed number
+
+    mov rdi, msg_factorial
+    call print_string
+
+    mov rdi, r12
+    call factorial
+
+    mov rdi, rax
+    call print_int
+    call print_newline
 
     call exit
+
+
+factorial:
+    mov rax, 1
+    mov rcx, 1
+.loop:
+    mul rcx
+    inc rcx
+    cmp rcx, rdi
+    jle .loop
+    ret
