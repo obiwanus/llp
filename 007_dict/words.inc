@@ -10,7 +10,7 @@ db "something that people drink", 0
 colon "vodka vodka", w2
 db "something I heard from RWJ", 0
 
-colon "boris yeltsin", w3
+colon "boris yeltsin", w_last
 db "former Russian president who liked vodka, apparently", 0
 
 %endif

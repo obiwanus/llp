@@ -43,6 +43,7 @@ print_char:
     pop rdi
     ret
 
+
 print_int:
     cmp rdi, 0
     jge print_uint
@@ -143,6 +144,45 @@ read_word:
     ret
 
 
+; Tries to read a null-terminated string from stdin into buffer
+; rdi - buffer address
+; rsi - buffer size
+; returns rax - if input too big then 0, otherwise buffer address
+; returns rdx - number of bytes read
+read_string:
+    xor rcx, rcx
+.loop:
+    cmp rcx, rsi
+    jge .out_of_space
+
+    ; attempt to read a char
+    push rsi
+    push rcx
+    push rdi
+    call read_char
+    pop rdi
+    pop rcx
+    pop rsi
+
+    ; write into buffer
+    mov [rdi + rcx], al
+    inc rcx
+
+    ; check for null-terminator or if nothing was read
+    cmp rax, 0
+    je .null
+
+    jmp .loop
+.null:
+    mov rax, rdi
+    mov rdx, rcx
+    ret
+.out_of_space:
+    xor rax, rax
+    xor rdx, rdx
+    ret
+
+
 ; rdi points to a string
 ; returns rax: number, rdx : length
 parse_uint:
@@ -233,20 +273,21 @@ string_copy:
 
 ; rdi - pointer to string1
 ; rsi - pointer to string2
-; returns 1 if strings are equal, 0 otherwise
+; returns string len if strings are equal, 0 otherwise
+global string_equals
 string_equals:
     xor rax, rax
+    xor rcx, rcx
 .loop:
-    mov al, [rdi]
-    cmp al, [rsi]
+    mov al, [rdi + rcx]
+    cmp al, [rsi + rcx]
     jne .not_equal
     test al, al
     jz .equal
-    inc rdi
-    inc rsi
+    inc rcx
     jmp .loop
 .equal:
-    mov rax, 1
+    mov rax, rcx
     ret
 .not_equal:
     xor rax, rax

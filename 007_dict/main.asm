@@ -1,4 +1,5 @@
 %include "words.inc"
+%include "../lib.inc"
 
 section .data
 err_input_too_large: db "Input string is too large", 10, 0
@@ -9,6 +10,7 @@ section .bss
 input_buffer: resb 256
 
 section .text
+extern find_word
 
 global _start
 ; Reads a string from input (at most 255 chars)
@@ -26,8 +28,17 @@ _start:
     test rdx, rdx
     jz .err_input_empty
 
-    ; TODO: finish
-    jmp .err_key_not_found
+    mov rdi, input_buffer   ; the key is now here
+    mov rsi, w_last
+    call find_word
+
+    test rax, rax
+    jz .err_key_not_found
+
+    ; value found!
+    mov rdi, rax
+    call print_string
+    call exit
 
 .err_input_too_large:
     mov rdi, err_input_too_large

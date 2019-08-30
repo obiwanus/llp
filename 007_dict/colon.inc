@@ -2,7 +2,7 @@
 %define COLON_INC
 
 %ifndef COLON_prev_entry
-%define COLON_prev_entry dict_start
+%define COLON_prev_entry 0
 %endif
 
 %macro colon 2
