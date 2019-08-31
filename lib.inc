@@ -31,6 +31,25 @@ print_string:
     ret
 
 
+; rdi - pointer to string
+print_string_ascii_values:
+.loop:
+    xor rax, rax
+    mov al, [rdi]   ; read one byte
+    test al, al
+    jz .end
+    inc rdi
+    push rdi
+    mov rdi, rax
+    call print_uint
+    mov rdi, ' '
+    call print_char
+    pop rdi
+    jmp .loop
+.end:
+    ret
+
+
 print_newline:
     mov rdi, 10
 print_char:
@@ -166,12 +185,12 @@ read_string:
 
     ; write into buffer
     mov [rdi + rcx], al
-    inc rcx
 
     ; check for null-terminator or if nothing was read
-    cmp rax, 0
-    je .null
+    test rax, rax
+    jz .null
 
+    inc rcx
     jmp .loop
 .null:
     mov rax, rdi

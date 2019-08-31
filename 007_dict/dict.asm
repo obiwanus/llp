@@ -25,7 +25,7 @@ find_word:
     ret
 
 .mismatch:
-    lea rsi, [rsi]
+    mov rsi, [rsi]
     jmp find_word   ; optimized call
 
 .key_not_found:

@@ -6,6 +6,8 @@ err_input_too_large: db "Input string is too large", 10, 0
 err_input_empty: db "Input was empty", 10, 0
 err_key_not_found: db "Key not found in the dictionary", 10, 0
 
+test_input_buffer: db "vodka", 0
+
 section .bss
 input_buffer: resb 256
 
@@ -28,7 +30,7 @@ _start:
     test rdx, rdx
     jz .err_input_empty
 
-    mov rdi, input_buffer   ; the key is now here
+    mov rdi, rax   ; the key is now here
     mov rsi, w_last
     call find_word
 
@@ -38,6 +40,7 @@ _start:
     ; value found!
     mov rdi, rax
     call print_string
+    call print_newline
     call exit
 
 .err_input_too_large:

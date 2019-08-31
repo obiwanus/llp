@@ -374,7 +374,7 @@ tests=[ Test('string_length',
         mov rdi, rax
         mov rax, 60
         syscall""",
-        lambda i,o,r: r == 1),
+        lambda i,o,r: r == len(i)),
 
         Test('string_equals not equals',
              lambda v: """section .data
