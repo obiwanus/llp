@@ -37,7 +37,7 @@ class RegEx:
             if char not in '()[]+*?':
                 self.subregex_list.append(Char(char))
             elif char in brackets:
-                matching_stack.append(brackets[char])
+                expecting_bracket = brackets[char]
             elif expecting_bracket:
                 if char != expecting_bracket:
                     subexpr.append(char)
