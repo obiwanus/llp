@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 
 def grep(expression, input_file):
-    if not is_valid(expression):
+    automata = parse(expression)
+    if not automata:
         return None, "Invalid expression"
 
     try:
@@ -12,8 +13,66 @@ def grep(expression, input_file):
     return True, None
 
 
-def is_valid(expression):
-    return True
+class ParseError(Exception):
+    pass
+
+
+class RegEx:
+
+    def __init__(self, expression):
+        self.subregex_list = []
+        self.parse(expression)
+
+    def parse(expression):
+        if len(expression) < 1:
+            return None
+
+        brackets = {'(': ')', '[': ']'}
+        expecting_bracket = None
+        subexpr = []
+
+        chars = list(expression)
+        while len(chars) > 0:
+            char = chars.pop(0)
+            if char not in '()[]+*?':
+                self.subregex_list.append(Char(char))
+            elif char in brackets:
+                matching_stack.append(brackets[char])
+            elif expecting_bracket:
+                if char != expecting_bracket:
+                    subexpr.append(char)
+                else:
+                    # TODO: handle square brackets
+                    self.subregex_list.append(RegEx(''.join(subexpr)))
+                    expecting_bracket = None
+            elif char == '+':
+                # TODO:
+
+        if expecting_bracket:
+            raise ParseError(f"Expected closing bracket: {expecting_bracket}")
+
+
+
+
+
+class State:
+    READY = 0
+    MATCH = 1
+    MISMATCH = 2
+
+
+class Char:
+
+    def __init__(self, char):
+        self.char = char
+        self.state = State.READY
+
+    def take(self, char):
+        assert self.state == State.READY
+        if char == self.char:
+            self.state = State.MATCH
+        else:
+            self.state = State.MISMATCH
 
 
 if __name__ == '__main__':
