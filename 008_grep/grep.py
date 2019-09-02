@@ -42,11 +42,27 @@ class RegEx:
                 if char != expecting_bracket:
                     subexpr.append(char)
                 else:
-                    # TODO: handle square brackets
-                    self.subregex_list.append(RegEx(''.join(subexpr)))
+                    subexpr = ''.join(subexpr)
+                    if expecting_bracket == ')':
+                        subregex = RegEx(subexpr)
+                    else:
+                        assert expecting_bracket == ']'
+                        subregex = RangeRegEx(subexpr)
+                    self.subregex_list.append(subregex)
                     expecting_bracket = None
-            elif char == '+':
-                # TODO:
+            elif char in '+*?':
+                try:
+                    prev_regex = self.subregex_list.pop()
+                except IndexError:
+                    raise ParseError(f"Expected expression before {char}")
+                char_to_regex = {
+                    '+': OneOrMoreExpr,
+                    '*': ZeroOrMoreExpr,
+                    '?': ZeroOrOneExpr,
+                }
+                subregex = char_to_regex[char](prev_regex)
+                self.subregex_list.append(subregex)
+
 
         if expecting_bracket:
             raise ParseError(f"Expected closing bracket: {expecting_bracket}")
