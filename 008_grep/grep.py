@@ -23,8 +23,8 @@ class RegEx:
         self.subregex_list = []
         self.parse(expression)
 
-    def parse(expression):
-        if len(expression) < 1:
+    def parse(self, expression):
+        if not expression:
             return None
 
         brackets = {'(': ')', '[': ']'}
@@ -32,7 +32,7 @@ class RegEx:
         subexpr = []
 
         chars = list(expression)
-        while len(chars) > 0:
+        while chars:
             char = chars.pop(0)
             if char not in '()[]+*?':
                 self.subregex_list.append(Char(char))
@@ -68,6 +68,28 @@ class RegEx:
             raise ParseError(f"Expected closing bracket: {expecting_bracket}")
 
 
+class RangeRegEx(RegEx):
+
+    def parse(self, expression):
+        pass
+
+
+class OneOrMoreExpr:
+
+    def __init__(self, regex):
+        self.regex = regex
+
+
+class ZeroOrMoreExpr:
+
+    def __init__(self, regex):
+        self.regex = regex
+
+
+class ZeroOrOneExpr:
+
+    def __init__(self, regex):
+        self.regex = regex
 
 
 
