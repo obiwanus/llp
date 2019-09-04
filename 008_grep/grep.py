@@ -13,6 +13,23 @@ def grep(expression, input_file):
     return True, None
 
 
+class State:
+    READY = 0
+    MATCH = 1
+
+
+class Char:
+
+    def __init__(self, char):
+        self.char = char
+        self.state = State.READY
+
+    def take(self, char):
+        assert self.state == State.READY
+        if char == self.char:
+            self.state = State.MATCH
+
+
 class ParseError(Exception):
     pass
 
@@ -21,6 +38,9 @@ class RegEx:
 
     def __init__(self, expression):
         self.subregex_list = []
+        self.current_subregex = None
+        self.state = State.READY
+
         self.parse(expression)
 
     def parse(self, expression):
@@ -63,15 +83,37 @@ class RegEx:
                 subregex = char_to_regex[char](prev_regex)
                 self.subregex_list.append(subregex)
 
-
         if expecting_bracket:
             raise ParseError(f"Expected closing bracket: {expecting_bracket}")
+
+    def take(self, char):
+        if self.state != State.READY:
+            return
+
+        if not self.current_subregex:
+            self.current_subregex = self.subregex_list[0]
+
+        state = self.current_subregex.take(char)
+        if state == State.MATCH:
+            self.subregex_list.pop(0)
+
+
+regex = 'vasia'  A 'v' B 'a' C 's' D 'i' E 'a' F
+
+A|C
+A|B
+A|F
+
+'vavasia'
 
 
 class RangeRegEx(RegEx):
 
     def parse(self, expression):
-        pass
+        raise NotImplementedError
+
+    def take(self, char):
+        raise NotImplementedError
 
 
 class OneOrMoreExpr:
@@ -90,27 +132,6 @@ class ZeroOrOneExpr:
 
     def __init__(self, regex):
         self.regex = regex
-
-
-
-class State:
-    READY = 0
-    MATCH = 1
-    MISMATCH = 2
-
-
-class Char:
-
-    def __init__(self, char):
-        self.char = char
-        self.state = State.READY
-
-    def take(self, char):
-        assert self.state == State.READY
-        if char == self.char:
-            self.state = State.MATCH
-        else:
-            self.state = State.MISMATCH
 
 
 if __name__ == '__main__':
