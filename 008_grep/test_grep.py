@@ -1,6 +1,6 @@
 import pytest
 
-from grep import is_valid, grep
+from grep import ParseError, RegEx
 
 
 @pytest.mark.parametrize('expression', [
@@ -13,10 +13,10 @@ from grep import is_valid, grep
     'skd+sdln+',
     'nsdn(sdf)?',
     '.+-(32)+',
-    '[0-9]+[A-Z]*',
+    # '[0-9]+[A-Z]*',
 ])
 def test_valid_expressions(expression):
-    assert is_valid(expression)
+    RegEx(expression)  # should not raise
 
 
 @pytest.mark.parametrize('expression', [
@@ -24,11 +24,17 @@ def test_valid_expressions(expression):
     '?', '*', '+',
     '(sdf(sdfds)',
     ']kjlksd',
-    '[323]',
-    '[1-32]',
-    'A||B',
+    # '[3--23]',
+    # '[-32]',
+    # 'A||B',
     'A()B',
-    'v(|_)d',
+    # 'v(|_)d',
 ])
 def test_invalid_expressions(expression):
-    assert is_valid(expression) is False
+    with pytest.raises(ParseError):
+        RegEx(expression)
+
+
+def test_regex():
+    regex = RegEx("vas")
+    import ipdb; ipdb.set_trace()

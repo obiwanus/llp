@@ -9,3 +9,5 @@ tmp
 
 .pytest_cache
 __pycache__
+ENV
+.vscode

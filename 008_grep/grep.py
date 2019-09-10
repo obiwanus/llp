@@ -13,23 +13,6 @@ def grep(expression, input_file):
     return True, None
 
 
-class State:
-    READY = 0
-    MATCH = 1
-
-
-class Char:
-
-    def __init__(self, char):
-        self.char = char
-        self.state = State.READY
-
-    def take(self, char):
-        assert self.state == State.READY
-        if char == self.char:
-            self.state = State.MATCH
-
-
 class ParseError(Exception):
     pass
 
@@ -37,28 +20,22 @@ class ParseError(Exception):
 class RegEx:
 
     def __init__(self, expression):
-        self.subregex_list = []
-        self.current_subregex = None
-        self.state = State.READY
-
-        self.parse(expression)
+        self.start = None
+        subregex_list = self.parse(expression)
+        self.start_state, self.end_state = self.construct_automaton(subregex_list)
 
     def parse(self, expression):
         if not expression:
-            return None
+            raise ParseError("Empty expression")
+
+        subregex_list = []
 
         brackets = {'(': ')', '[': ']'}
         expecting_bracket = None
         subexpr = []
 
-        chars = list(expression)
-        while chars:
-            char = chars.pop(0)
-            if char not in '()[]+*?':
-                self.subregex_list.append(Char(char))
-            elif char in brackets:
-                expecting_bracket = brackets[char]
-            elif expecting_bracket:
+        for i, char in enumerate(expression):
+            if expecting_bracket:
                 if char != expecting_bracket:
                     subexpr.append(char)
                 else:
@@ -68,11 +45,16 @@ class RegEx:
                     else:
                         assert expecting_bracket == ']'
                         subregex = RangeRegEx(subexpr)
-                    self.subregex_list.append(subregex)
+                    subregex_list.append(subregex)
                     expecting_bracket = None
+                    subexpr = []
+            elif char in brackets:
+                expecting_bracket = brackets[char]
+            elif char in brackets.values():
+                raise ParseError(f"Unexpected closing bracket {char} at position {i}")
             elif char in '+*?':
                 try:
-                    prev_regex = self.subregex_list.pop()
+                    prev_regex = subregex_list.pop()
                 except IndexError:
                     raise ParseError(f"Expected expression before {char}")
                 char_to_regex = {
@@ -81,57 +63,96 @@ class RegEx:
                     '?': ZeroOrOneExpr,
                 }
                 subregex = char_to_regex[char](prev_regex)
-                self.subregex_list.append(subregex)
+                subregex_list.append(subregex)
+            else:
+                subregex_list.append(Char(char))
 
         if expecting_bracket:
             raise ParseError(f"Expected closing bracket: {expecting_bracket}")
 
-    def take(self, char):
-        if self.state != State.READY:
-            return
+        return subregex_list
 
-        if not self.current_subregex:
-            self.current_subregex = self.subregex_list[0]
+    @staticmethod
+    def construct_automaton(subregex_list):
+        assert subregex_list, "Empty regex list"
+        start_state = State(PASSTHROUGH, out=None)
+        end_state = State(MATCH, out=None)
+        current_state = start_state
 
-        state = self.current_subregex.take(char)
-        if state == State.MATCH:
-            self.subregex_list.pop(0)
+        # Connect all fragments
+        while subregex_list:
+            # TODO: pipe regex
+            next_fragment = subregex_list.pop(0)
+            current_state.out = next_fragment.start_state
+            current_state = next_fragment.end_state
+        current_state.out = end_state
+
+        # Rewire to delete all passthrough states (they were used only for convenience)
+        def rewire(state):
+
+            # TODO: debug this!!!!!!!!!!!!! (draw a picture)
+            while state.out is not None:
+                if state.out.c == PASSTHROUGH:
+                    state.out = state.out.out
+                if state.c == SPLIT:
+                    assert state.out1 is not None
+                    rewire(state.out1)
+                state = state.out
+        rewire(start_state)
+
+        return start_state, end_state
 
 
-regex = 'vasia'  A 'v' B 'a' C 's' D 'i' E 'a' F
+ANY_CHAR = 0
+SPLIT = 1
+MATCH = 2
+PASSTHROUGH = 3
 
-A|C
-A|B
-A|F
 
-'vavasia'
+class State:
+    def __init__(self, c, out, out1=None):
+        self.c = c
+        self.out = out
+        self.out1 = out1
+
+
+class Char:
+    def __init__(self, c):
+        if c == '.':
+            c = ANY_CHAR
+        self.start_state = State(c, out=None)
+        self.end_state = self.start_state
 
 
 class RangeRegEx(RegEx):
 
     def parse(self, expression):
-        raise NotImplementedError
-
-    def take(self, char):
-        raise NotImplementedError
+        return
+        # raise NotImplementedError
 
 
 class OneOrMoreExpr:
 
     def __init__(self, regex):
-        self.regex = regex
+        self.start_state = regex.start_state
+        self.end_state = State(SPLIT, out=None, out1=self.start_state)
+        regex.end_state.out = self.end_state
 
 
 class ZeroOrMoreExpr:
 
     def __init__(self, regex):
-        self.regex = regex
+        self.start_state = State(SPLIT, out=None, out1=regex.start_state)
+        self.end_state = self.start_state
+        regex.end_state.out = self.start_state
 
 
 class ZeroOrOneExpr:
 
     def __init__(self, regex):
-        self.regex = regex
+        self.end_state = State(PASSTHROUGH, out=None)
+        self.start_state = State(SPLIT, out=regex.start_state, out1=self.end_state)
+        regex.end_state.out = self.end_state
 
 
 if __name__ == '__main__':
