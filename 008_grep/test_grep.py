@@ -36,5 +36,5 @@ def test_invalid_expressions(expression):
 
 
 def test_regex():
-    regex = RegEx("vas")
+    regex = RegEx("v(ab)+s")
     import ipdb; ipdb.set_trace()

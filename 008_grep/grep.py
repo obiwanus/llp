@@ -22,7 +22,7 @@ class RegEx:
     def __init__(self, expression):
         self.start = None
         subregex_list = self.parse(expression)
-        self.start_state, self.end_state = self.construct_automaton(subregex_list)
+        self.start, self.end = self.construct_automaton(subregex_list)
 
     def parse(self, expression):
         if not expression:
@@ -75,32 +75,40 @@ class RegEx:
     @staticmethod
     def construct_automaton(subregex_list):
         assert subregex_list, "Empty regex list"
-        start_state = State(PASSTHROUGH, out=None)
-        end_state = State(MATCH, out=None)
-        current_state = start_state
+        start = State(PASSTHROUGH, out=None)
+        end = State(MATCH, out=None)
+        current = start
 
         # Connect all fragments
         while subregex_list:
             # TODO: pipe regex
             next_fragment = subregex_list.pop(0)
-            current_state.out = next_fragment.start_state
-            current_state = next_fragment.end_state
-        current_state.out = end_state
+            current.out = next_fragment.start
+            current = next_fragment.end
+        current.out = end
 
-        # Rewire to delete all passthrough states (they were used only for convenience)
-        def rewire(state):
+        def rewire(state, seen):
+            """
+            Delete all passthrough states (they were used only for convenience)
+            """
+            if state in seen:
+                return
+            seen.add(state)
 
-            # TODO: debug this!!!!!!!!!!!!! (draw a picture)
             while state.out is not None:
                 if state.out.c == PASSTHROUGH:
                     state.out = state.out.out
                 if state.c == SPLIT:
                     assert state.out1 is not None
-                    rewire(state.out1)
+                    if state.out1.c == PASSTHROUGH:
+                        state.out1 = state.out1.out
+                    rewire(state.out1, seen)
                 state = state.out
-        rewire(start_state)
 
-        return start_state, end_state
+        rewire(start, seen=set())
+        start = start.out
+
+        return start, end
 
 
 ANY_CHAR = 0
@@ -120,8 +128,8 @@ class Char:
     def __init__(self, c):
         if c == '.':
             c = ANY_CHAR
-        self.start_state = State(c, out=None)
-        self.end_state = self.start_state
+        self.start = State(c, out=None)
+        self.end = self.start
 
 
 class RangeRegEx(RegEx):
@@ -134,25 +142,25 @@ class RangeRegEx(RegEx):
 class OneOrMoreExpr:
 
     def __init__(self, regex):
-        self.start_state = regex.start_state
-        self.end_state = State(SPLIT, out=None, out1=self.start_state)
-        regex.end_state.out = self.end_state
+        self.start = regex.start
+        self.end = State(SPLIT, out=None, out1=self.start)
+        regex.end.out = self.end
 
 
 class ZeroOrMoreExpr:
 
     def __init__(self, regex):
-        self.start_state = State(SPLIT, out=None, out1=regex.start_state)
-        self.end_state = self.start_state
-        regex.end_state.out = self.start_state
+        self.start = State(SPLIT, out=None, out1=regex.start)
+        self.end = self.start
+        regex.end.out = self.start
 
 
 class ZeroOrOneExpr:
 
     def __init__(self, regex):
-        self.end_state = State(PASSTHROUGH, out=None)
-        self.start_state = State(SPLIT, out=regex.start_state, out1=self.end_state)
-        regex.end_state.out = self.end_state
+        self.end = State(PASSTHROUGH, out=None)
+        self.start = State(SPLIT, out=regex.start, out1=self.end)
+        regex.end.out = self.end
 
 
 if __name__ == '__main__':
